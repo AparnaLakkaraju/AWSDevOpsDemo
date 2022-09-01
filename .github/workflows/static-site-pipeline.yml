@@ -1,0 +1,77 @@
+name: static-site
+
+on:
+  push:
+    paths:
+      - '.github/workflows/static-site-pipeline.yml'
+      - '.github/scripts/qsk/**'
+      - '.github/scripts/static-site/**'
+      - 'static-site/**'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'static-site/**'
+    branches:
+      - main
+  ## Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CDK_APP_DIR: static-site
+  CONFIG_FILE_NAME: qsk.config.json
+  QSK_INPUT_BUCKET: qsk-dev-v2-sc-input-product-bucket
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run build script
+        run: ./.github/scripts/static-site/build.sh
+
+  BOOSTRAP:
+    needs: CI
+    runs-on: ubuntu-latest
+    env:
+      aws_account: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+      aws_region: ${{ secrets.CDK_DEFAULT_REGION }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.CDK_DEFAULT_REGION }}
+
+      - name: Read Configuration
+        run: ./.github/scripts/qsk/config-reader.sh
+
+      - name: CDK Bootstrap
+        run: ./.github/scripts/qsk/account-bootstrapping.sh
+  
+  DEPLOY:
+    needs: BOOSTRAP
+    runs-on: ubuntu-latest
+    env:
+      aws_account: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+      aws_region: ${{ secrets.CDK_DEFAULT_REGION }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.CDK_DEFAULT_REGION }}
+
+      - name: Run deploy script
+        run: ./.github/scripts/static-site/deploy.sh

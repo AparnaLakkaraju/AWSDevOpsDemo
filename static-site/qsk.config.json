@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "qsk-static-site",
+    "version": "1.0.0"
+  },
+  "qualifier": "qsksts",
+  "share": true,
+  "product": {
+    "owner": "Theo",
+    "description": "sample description of qsk-static-site"
+  },
+  "support": {
+    "description": "sample support description of qsk-static-site",
+    "email": "sample@support.de",
+    "url": "https://github.com/dpp-qsk/qsk-capability/tree/main/static-site"
+  }
+}
